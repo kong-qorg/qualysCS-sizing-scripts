@@ -25,9 +25,9 @@ commands:
   - cli general 
   - cli general -output output.txt
 
-  environment_variables:
-  - name: default_target_location
-    help: Set the default location to download to
+  # environment_variables:
+  # - name: default_target_location
+  #   help: Set the default location to download to
 
 - name: registry
   alias: 
