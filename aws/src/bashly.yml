@@ -7,12 +7,12 @@ environment_variables:
   help: Set your API key
 
 commands:
-- name: generate
+- name: general
   alias: 
-  help: Qualys Container Security - Sizing tool
+  help: Generate sizing for General Sensor(s)
 
   args:
-  - name: target
+  - name: output
     required: false
     help: output file
  
@@ -22,12 +22,30 @@ commands:
   #   help: Overwrite existing files
 
   examples:
-  - cli generate example.com
-  - cli generate example.com ./output -f
+  - cli general 
+  - cli general -output output.txt
 
   environment_variables:
   - name: default_target_location
     help: Set the default location to download to
+
+- name: registry
+  alias: 
+  help: Generate sizing for Registry Sensor(s)
+
+  args:
+  - name: output
+    required: false
+    help: output file
+ 
+  # flags:
+  # - long: --force
+  #   short: -f
+  #   help: Overwrite existing files
+
+  examples:
+  - cli registry 
+  - cli registry -output output.txt
 
 # - name: upload
 #   alias: u
