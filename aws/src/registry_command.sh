@@ -13,15 +13,10 @@ fi
 ## Set or reset counters.
 ##########################################################################################
 resetAccountCounters() {
-  EC2_INSTANCE_COUNT=0
-  ECS_FARGATE_TASK_COUNT=0
-
+  ECR_REPO_COUNT_GLOBAL=0
 }
 resetGlobalCounters() {
-  	EKS_INSTANCE_COUNT_GLOBAL=0
-	ECS_INSTANCE_COUNT_GLOBAL=0
-	ECS_FARGATE_TASK_COUNT_GLOBAL=0
-
+  	ECR_REPO_COUNT_GLOBAL=0
 	USE_AWS_ORG=false
 }
 
@@ -106,8 +101,9 @@ aws_sts_assume_role() {
     echo "${RESULT}"
   fi
 }
-aws_ec2_describe_instances() {
-  RESULT=$(aws ec2 describe-instances --max-items 99999 --region="${1}" --filters "Name=instance-state-name,Values=running" --output json 2>/dev/null)
+aws_ecr_describe_repositories() {
+# aws ecr describe-repositories | jq '.repositories[].repositoryName' | sed s/\"//g
+  RESULT=$(aws ecr describe-repositories  --region="${1}" | jq '.repositories[].repositoryName' | sed s/\"//g 2>/dev/null)
   if [ $? -eq 0 ]; then
     echo "${RESULT}"
   else
@@ -120,61 +116,6 @@ aws_ec2_describe_regions() {
     echo "${RESULT}"
   fi
 }
-aws_ecs_list_clusters() {
-  RESULT=$(aws ecs list-clusters --max-items 99999 --region="${1}" --output json 2>/dev/null)
-  if [ $? -eq 0 ]; then
-    echo "${RESULT}"
-  else
-    echo '{"Error": [] }'
-  fi
-}
-
-aws_ecs_list_tasks() {
-  RESULT=$(aws ecs list-tasks --max-items 99999 --region "${1}" --cluster "${2}" --desired-status running --output json 2>/dev/null)
-  if [ $? -eq 0 ]; then
-    echo "${RESULT}"
-  else
-    echo '{"Error": [] }'
-  fi
-}
-
-get_ecs_fargate_task_count() {
-  REGION=$1
-  ECS_FARGATE_CLUSTERS=$(aws_ecs_list_clusters "${REGION}")
-
-  XIFS=$IFS
-  # shellcheck disable=SC2206
-  IFS=$'\n' ECS_FARGATE_CLUSTERS_LIST=($ECS_FARGATE_CLUSTERS)
-  IFS=$XIFS
-
-  ECS_FARGATE_TASK_LIST_COUNT=0
-  RESULT=0
-
-  for CLUSTER in "${ECS_FARGATE_CLUSTERS_LIST[@]}"
-  do
-    ECS_FARGATE_TASK_LIST_COUNT=($(aws_ecs_list_tasks "${REGION}" --cluster "${CLUSTER}" --desired-status running --output json | jq -r '[.taskArns[]] | length' 2>/dev/null))
-    RESULT=$((RESULT + ECS_FARGATE_TASK_LIST_COUNT))
-  done
-  echo "${RESULT}"
-}
-aws_eks_list_clusters() {
-  RESULT=$(aws eks list-clusters --max-items 99999 --region="${1}" --output json 2>/dev/null)
-  if [ $? -eq 0 ]; then
-    echo "${RESULT}"
-  else
-    echo '{"Error": [] }'
-  fi
-}
-
-# aws_eks_describe_cluster() {
-#   RESULT=$(aws eks describe-cluster --name="${1}" --output json 2>/dev/null)
-#   if [ $? -eq 0 ]; then
-#     echo "${RESULT}"
-#   else
-#     echo '{"Error": [] }'
-#     exit -1
-#   fi
-# }
 ##########################################################################################
 ## Main
 ##########################################################################################
@@ -199,34 +140,33 @@ computeResourceSizing(){
     for i in "${REGION_LIST[@]}"
     do
       RESOURCE_COUNT="0" # reset
-      CLUSTERS_JSON=$(aws_eks_list_clusters "${i}" | jq '.clusters'  2>/dev/null)
+      CLUSTERS_JSON=$(aws_ecr_describe_repositories "${i}"  2>/dev/null)
       RESOURCE_COUNT=$(echo $CLUSTERS_JSON | jq '. | length' 2>/dev/null)
-      echo "  Total # of Running EKS Clusters in Region ${i}: ${RESOURCE_COUNT}"
-      EKS_CLUSTER_COUNT=$((EKS_CLUSTER_COUNT + RESOURCE_COUNT))
+      echo "  Total # of ECR repositories in Region ${i}: ${RESOURCE_COUNT}"
+      # EKS_CLUSTER_COUNT=$((EKS_CLUSTER_COUNT + RESOURCE_COUNT))
      
-      if  [ $((RESOURCE_COUNT)) -ne 0 ]; then # only proceed if resource is not equal zero
-	  for row in $(echo $CLUSTERS_JSON | jq -r '.[] '); 
-	    do
-		# TODO - extract relevant information about the clusters - such as number of nodes, 
-		# k8s versions.
-   		cluster_name=$row
-    	CLUSTER_OUTPUT=$(aws eks describe-cluster --name=$cluster_name --output json 2>/dev/null)
-    	mkdir -p ./output
-	    echo $CLUSTER_OUTPUT > ./output/${row}-cluster-info.json
-        # https://docs.aws.amazon.com/cli/latest/reference/eks/describe-cluster.html
-        # https://docs.aws.amazon.com/eks/latest/userguide/eks-compute.html
-        NODEGROUP_OUTPUT=$(aws eks list-nodegroups --cluster-name=$cluster_name --output json 2>/dev/null)
-    	mkdir -p ./output
-	    echo $NODEGROUP_OUTPUT > ./output/${row}-nodegroups.json
-	  done
-      fi
+      # if  [ $((RESOURCE_COUNT)) -ne 0 ]; then # only proceed if resource is not equal zero
+	  # for row in $(echo $CLUSTERS_JSON | jq -r '.[] '); 
+	  #   do
+	# 	# TODO - extract relevant information about the clusters - such as number of nodes, 
+	# 	# k8s versions.
+   	# 	cluster_name=$row
+    # 	CLUSTER_OUTPUT=$(aws eks describe-cluster --name=$cluster_name --output json 2>/dev/null)
+    # 	mkdir -p ./output
+	  #   echo $CLUSTER_OUTPUT > ./output/${row}-cluster-info.json
+      #   # https://docs.aws.amazon.com/cli/latest/reference/eks/describe-cluster.html
+      #   # https://docs.aws.amazon.com/eks/latest/userguide/eks-compute.html
+      #   NODEGROUP_OUTPUT=$(aws eks list-nodegroups --cluster-name=$cluster_name --output json 2>/dev/null)
+    # 	mkdir -p ./output
+	  #   echo $NODEGROUP_OUTPUT > ./output/${row}-nodegroups.json
+	  # done
+     ## fi
 	
     done
-    echo "Total EKS Instances across all regions: ${EKS_CLUSTER_COUNT}"
+    echo "Total ECR Instances across all regions: TBD"
     echo "###################################################################################"
  
- 
- 
+  
     #reset_account_counters
 
     if [ "${USE_AWS_ORG}" = "true" ]; then

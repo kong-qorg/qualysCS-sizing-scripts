@@ -1,7 +1,6 @@
 name: qualyscs_sizing_aws
-help: Sample application
+help: Container Security Sizing tool
 version: 0.1.0
-
 environment_variables:
 - name: api_key
   help: Set your API key
