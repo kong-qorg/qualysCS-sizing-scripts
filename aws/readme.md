@@ -12,8 +12,13 @@ Use an AWS account with the required permissions to collect sizing information.
 The below AWS APIs need to be enabled in order to gather information from AWS.
 TBD
 
+## Command to scan the AWS EKS clusters and detect the total number of node(s)
+./qualyscs_sizing_aws general
 
-## Commands
+## Command to scan the AWS ECR registry and collect images and repositories information
+$./qualyscs_sizing_aws registry
+
+
 
 
 
