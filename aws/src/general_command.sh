@@ -18,7 +18,7 @@ resetAccountCounters() {
 
 }
 resetGlobalCounters() {
-  	EKS_INSTANCE_COUNT_GLOBAL=0
+  EKS_INSTANCE_COUNT_GLOBAL=0
 	ECS_INSTANCE_COUNT_GLOBAL=0
 	ECS_FARGATE_TASK_COUNT_GLOBAL=0
 
@@ -166,15 +166,6 @@ aws_eks_list_clusters() {
   fi
 }
 
-# aws_eks_describe_cluster() {
-#   RESULT=$(aws eks describe-cluster --name="${1}" --output json 2>/dev/null)
-#   if [ $? -eq 0 ]; then
-#     echo "${RESULT}"
-#   else
-#     echo '{"Error": [] }'
-#     exit -1
-#   fi
-# }
 ##########################################################################################
 ## Main
 ##########################################################################################

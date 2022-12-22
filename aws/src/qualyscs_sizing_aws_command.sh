@@ -164,17 +164,19 @@ aws_eks_list_clusters() {
   else
     echo '{"Error": [] }'
   fi
+  log "INFO" "aws_eks_list_clusters:  ${RESULT}"
 }
-
-# aws_eks_describe_cluster() {
-#   RESULT=$(aws eks describe-cluster --name="${1}" --output json 2>/dev/null)
-#   if [ $? -eq 0 ]; then
-#     echo "${RESULT}"
-#   else
-#     echo '{"Error": [] }'
-#     exit -1
-#   fi
-# }
+#   CLUSTER_OUTPUT=$(aws eks describe-cluster --name=$cluster_name --output json 2>/dev/null)
+aws_eks_describe_cluster() {
+  RESULT=$(aws eks describe-cluster --name="${1}" --output json 2>/dev/null)
+  if [ $? -eq 0 ]; then
+    echo "${RESULT}"
+  else
+    echo '{"Error": [] }'
+    exit -1
+  fi
+  log "INFO" "aws_eks_describe_cluster:  ${RESULT}"
+}
 ##########################################################################################
 ## Main
 ##########################################################################################
@@ -204,13 +206,15 @@ computeResourceSizing(){
       echo "  Total # of Running EKS Clusters in Region ${i}: ${RESOURCE_COUNT}"
       EKS_CLUSTER_COUNT=$((EKS_CLUSTER_COUNT + RESOURCE_COUNT))
      
-      if  [ $((RESOURCE_COUNT)) -ne 0 ]; then # only proceed if resource is not equal zero
+      if  [ ${RESOURCE_COUNT} -ne 0 ]; then # only proceed if resource is not equal zero
 	  for row in $(echo $CLUSTERS_JSON | jq -r '.[] '); 
 	    do
 		# TODO - extract relevant information about the clusters - such as number of nodes, 
 		# k8s versions.
+       echo "  EKS Clusters in Region ${i} ${$row}"
+  
    		cluster_name=$row
-    	CLUSTER_OUTPUT=$(aws eks describe-cluster --name=$cluster_name --output json 2>/dev/null)
+    	CLUSTER_OUTPUT=$(aws_eks_describe_cluster "${row}")
     	mkdir -p ./output
 	    echo $CLUSTER_OUTPUT > ./output/${row}-cluster-info.json
         # https://docs.aws.amazon.com/cli/latest/reference/eks/describe-cluster.html
